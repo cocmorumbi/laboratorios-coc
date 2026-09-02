@@ -24,6 +24,8 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 22px;
   font-weight: 1500;
+  /* Remove o quadro azul/cinza de toque em celulares */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -51,7 +53,7 @@ body {
 .main-page-subtitle {
   display: block !important;
   text-align: center !important;
-  margin: -10px !important;
+  margin: 10px !important;
   width: 100% !important;
 }
 
