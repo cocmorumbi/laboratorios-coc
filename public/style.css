@@ -35,6 +35,7 @@ body {
   justify-content: center;
   padding-top: 20px;
   perspective: 1200px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .header-title-container {
@@ -43,7 +44,7 @@ body {
   align-items: center !important;
   justify-content: center !important;
   width: 100% !important;
-  margin-bottom: 20px !important; /* Espaço entre o título e a barra de controles */
+  margin-bottom: 20px !important;
 }
 
 .main-page-title,
@@ -122,8 +123,8 @@ body {
 .month-header-large .month-name {
   color: var(--text);
   gap: 12px;
-  font-size: 2rem; /* Aumentado para dar mais destaque */
-  font-weight: 900; /* Texto mais encorpado */
+  font-size: 2rem;
+  font-weight: 900;
   letter-spacing: -1px;
   text-transform: uppercase;
   text-shadow: 1px 3px 2px var(--btn-hover);
@@ -132,8 +133,8 @@ body {
 .month-header-large .year-number {
   color: var(--accent);
   gap: 12px;
-  font-size: 2rem; /* Aumentado para dar mais destaque */
-  font-weight: 900; /* Texto mais encorpado */
+  font-size: 2rem;
+  font-weight: 900;
   letter-spacing: -1px;
   text-shadow: 2px 2px 2px var(--title-shadow);
 }
@@ -488,12 +489,6 @@ body.dark-mode {
   --btn-hover: #8f9296;
 }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
 .top-controls-bar {
   display: flex !important;
   flex-direction: column !important;
@@ -520,7 +515,6 @@ body {
   min-width: 140px !important;
 }
 
-/* Container do filtro de sala (fica logo abaixo, em formato horizontal) */
 .room-filter-container {
   display: flex;
   flex-direction: row;
@@ -547,7 +541,6 @@ body {
   outline: none;
 }
 
-/* Estilo unificado para os botões dividirem o espaço igualmente */
 .theme-toggle-btn,
 .monthly-toggle-btn {
   flex: 1;
@@ -579,11 +572,53 @@ body {
   transform: translateY(0);
 }
 
-/* Quando a visão mensal estiver ativada */
 #weeksStack.monthly-view .week-card {
   filter: none !important;
   opacity: 1 !important;
   transform: none !important;
   pointer-events: auto !important;
   margin-bottom: 12px;
+}
+
+/* ==========================================================
+   AJUSTE DE RESPONSIVIDADE PARA CELULAR (Elimina margens laterais)
+   ========================================================== */
+@media screen and (max-width: 768px) {
+  body {
+    padding: 6px;
+    align-items: stretch;
+  }
+
+  .calendar-container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .month-page {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .main-page-title {
+    font-size: 2.3rem !important;
+    letter-spacing: 4px !important;
+  }
+
+  .main-page-subtitle {
+    font-size: 1.2rem !important;
+  }
+
+  .top-buttons-row {
+    max-width: 100% !important;
+  }
+
+  .room-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .room-filter-container select {
+    width: 100%;
+  }
 }
