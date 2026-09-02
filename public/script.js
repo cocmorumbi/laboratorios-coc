@@ -7,6 +7,11 @@ let dayAppointmentsCache = {};
 let appointmentsMap = {}; // Variável global de cache para os agendamentos do mês
 let selectedGlobalRoom = "";
 let isFetchingDots = false;
+let deferredPrompt;
+
+const installBanner = document.getElementById('pwa-install-banner');
+const installBtn = document.getElementById('pwa-install-btn');
+const closeBtn = document.getElementById('pwa-close-btn');
 
 const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const daysName = ["Seg", "Ter", "Qua", "Qui", "Sex"];
@@ -582,32 +587,36 @@ function detectIosAndShowGuide() {
 
 window.addEventListener('load', detectIosAndShowGuide);
 
-// Banner de instalação para Android
-let deferredPrompt;
-
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
 
-  const banner = document.getElementById('pwa-install-banner');
-  if (banner) {
-    banner.style.display = 'flex'; // Mostra o banner do HTML
-
-    const installBtn = document.getElementById('pwa-install-btn');
-    const closeBtn = document.getElementById('pwa-close-btn');
-
-    installBtn.addEventListener('click', async () => {
-      banner.style.display = 'none';
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        console.log('Usuário aceitou instalar o PWA');
-      }
-      deferredPrompt = null;
-    });
-
-    closeBtn.addEventListener('click', () => {
-      banner.style.display = 'none';
-    });
+  if (installBanner) {
+    installBanner.style.display = 'flex'; // Exibe o banner no topo
   }
 });
+
+// 2. Configura o botão de instalar fora do evento para evitar duplicação
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+
+    installBanner.style.display = 'none';
+    deferredPrompt.prompt();
+
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('Usuário aceitou instalar o PWA');
+    }
+    deferredPrompt = null;
+  });
+}
+
+// 3. Configura o botão de fechar (X)
+if (closeBtn) {
+  closeBtn.addEventListener('click', () => {
+    if (installBanner) {
+      installBanner.style.display = 'none';
+    }
+  });
+}
