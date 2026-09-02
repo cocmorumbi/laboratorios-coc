@@ -637,9 +637,8 @@ body.dark-mode {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  z-index: 2000;
+  z-index: 200000;
   padding: 15px;
-  animation: pwaFadeIn 0.3s ease;
 }
 
 @keyframes pwaFadeIn {
@@ -689,20 +688,19 @@ body.dark-mode {
 /* Banner de Instalação (Android / Outros) */
 .pwa-install-banner {
   position: fixed;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  background: var(--card-bg, #1e293b);
-  color: var(--text, #f8fafc);
-  padding: 16px;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  background: var(--card-bg);
+  color: var(--text);
+  padding: 14px 16px;
   border-radius: 16px;
-  border: 1px solid var(--border, #475569);
+  border: 1px solid var(--border);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 9999;
-  font-family: inherit;
+  z-index: 99999;
 }
 
 .pwa-banner-title {
