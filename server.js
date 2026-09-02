@@ -1,131 +1,118 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
-const FILE_PATH = path.join(__dirname, 'agendamentos.json');
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Função para ler dados do JSON
-function readData() {
-  if (!fs.existsSync(FILE_PATH)) {
-    fs.writeFileSync(FILE_PATH, JSON.stringify([]));
-    return [];
+// Configuração da conexão com o Neon PostgreSQL usando a variável de ambiente do Render
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
   }
-  try {
-    const content = fs.readFileSync(FILE_PATH, 'utf-8');
-    return JSON.parse(content || '[]');
-  } catch (err) {
-    return [];
-  }
-}
-
-// Função para salvar dados no JSON
-function saveData(data) {
-  fs.writeFileSync(FILE_PATH, JSON.stringify(data, null, 2));
-}
-
-// 1. ROTA DE MÊS PRIMEIRO (para evitar conflito com a rota de dia específico)
-app.get('/api/appointments/month/:yearMonth', (req, res) => {
-  const { yearMonth } = req.params;
-  const appointments = readData();
-  const filtered = appointments.filter(a => a.dayKey && a.dayKey.startsWith(yearMonth));
-  res.json(filtered);
 });
 
-// 2. Buscar agendamentos de um dia específico (ordenados por horário)
-app.get('/api/appointments/:dayKey', (req, res) => {
+// 1. Buscar todos os agendamentos ou filtrar por mês
+app.get('/api/appointments', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM appointments ORDER BY time ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar agendamentos:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+// 2. Buscar agendamentos de um dia específico
+app.get('/api/appointments/:dayKey', async (req, res) => {
   const { dayKey } = req.params;
-  const appointments = readData();
-  const filtered = appointments.filter(a => a.dayKey === dayKey);
-
-  filtered.sort((a, b) => {
-    const timeToMinutes = (t) => {
-      if (!t) return 0;
-      const clean = t.toLowerCase().replace(/h/g, ':').split(':');
-      const hours = parseInt(clean[0], 10) || 0;
-      const minutes = parseInt(clean[1], 10) || 0;
-      return (hours * 60) + minutes;
-    };
-    return timeToMinutes(a.time) - timeToMinutes(b.time);
-  });
-
-  res.json(filtered);
+  try {
+    const result = await pool.query(
+      'SELECT * FROM appointments WHERE "dayKey" = $1 ORDER BY time ASC',
+      [dayKey]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar agendamentos do dia:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
 });
 
 // 3. Criar novo agendamento
-app.post('/api/appointments', (req, res) => {
+app.post('/api/appointments', async (req, res) => {
   const { dayKey, title, location, time } = req.body;
 
   if (!dayKey || !title || !location || !time) {
     return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
   }
 
-  const appointments = readData();
+  try {
+    // Verifica se já existe agendamento no mesmo horário/local/dia
+    const checkExisting = await pool.query(
+      'SELECT * FROM appointments WHERE "dayKey" = $1 AND location = $2 AND time = $3',
+      [dayKey, location, time]
+    );
 
-  const existing = appointments.find(
-    a => a.dayKey === dayKey && a.location === location && a.time === time
-  );
+    if (checkExisting.rows.length > 0) {
+      return res.status(400).json({ error: 'Este horário já está reservado para este local.' });
+    }
 
-  if (existing) {
-    return res.status(400).json({ error: 'Este horário já está reservado para este local.' });
+    const insertResult = await pool.query(
+      'INSERT INTO appointments ("dayKey", title, location, time) VALUES ($1, $2, $3, $4) RETURNING *',
+      [dayKey, title, location, time]
+    );
+
+    res.status(201).json(insertResult.rows[0]);
+  } catch (err) {
+    console.error('Erro ao criar agendamento:', err);
+    res.status(500).json({ error: 'Erro interno ao salvar no banco.' });
   }
-
-  const newAppointment = {
-    _id: `${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    dayKey,
-    title,
-    location,
-    time
-  };
-
-  appointments.push(newAppointment);
-  saveData(appointments);
-
-  res.status(201).json(newAppointment);
 });
 
-// Função para deletar agendamento por ID
-function deleteAppointmentById(req, res) {
+// 4. Deletar agendamento por ID
+app.delete('/api/appointments/id/:id', async (req, res) => {
   const { id } = req.params;
-  let appointments = readData();
+  try {
+    const deleteResult = await pool.query('DELETE FROM appointments WHERE id = $1 RETURNING *', [id]);
 
-  const initialLength = appointments.length;
-  appointments = appointments.filter(a => String(a._id).trim() !== String(id).trim());
-
-  if (appointments.length === initialLength) {
-    return res.status(404).json({ error: 'Agendamento não encontrado.' });
-  }
-
-  saveData(appointments);
-  return res.json({ message: 'Agendamento cancelado com sucesso!' });
-}
-
-// 4. Rotas de Deleção (ID específico primeiro)
-app.delete('/api/appointments/id/:id', deleteAppointmentById);
-
-app.delete('/api/appointments/:param', (req, res) => {
-  const { param } = req.params;
-  const { time, location } = req.body || {};
-
-  if (time && location) {
-    let appointments = readData();
-    const initialLength = appointments.length;
-
-    appointments = appointments.filter(a => !(a.dayKey === param && a.time === time && a.location === location));
-
-    if (appointments.length === initialLength) {
+    if (deleteResult.rows.length === 0) {
       return res.status(404).json({ error: 'Agendamento não encontrado.' });
     }
 
-    saveData(appointments);
-    return res.json({ message: 'Agendamento cancelado com sucesso!' });
+    res.json({ message: 'Agendamento cancelado com sucesso!' });
+  } catch (err) {
+    console.error('Erro ao deletar agendamento:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+// 5. Deletar por parâmetros alternativos (dia, hora e local)
+app.delete('/api/appointments/:dayKey', async (req, res) => {
+  const { dayKey } = req.params;
+  const { time, location } = req.body || {};
+
+  if (!time || !location) {
+    return res.status(400).json({ error: 'Parâmetros insuficientes para exclusão.' });
   }
 
-  req.params.id = param;
-  return deleteAppointmentById(req, res);
+  try {
+    const deleteResult = await pool.query(
+      'DELETE FROM appointments WHERE "dayKey" = $1 AND time = $2 AND location = $3 RETURNING *',
+      [dayKey, time, location]
+    );
+
+    if (deleteResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Agendamento não encontrado.' });
+    }
+
+    res.json({ message: 'Agendamento cancelado com sucesso!' });
+  } catch (err) {
+    console.error('Erro ao deletar agendamento:', err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
 });
 
 // Inicialização do servidor
