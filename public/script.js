@@ -553,3 +553,89 @@ stack.addEventListener('wheel', e => {
 
   setTimeout(() => { isScrolling = false; }, 250);
 }, { passive: false });
+
+function detectIosAndShowGuide() {
+  const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+  const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
+
+  // Se for iOS e o app ainda não estiver rodando instalado em tela cheia
+  if (isIos && !isInStandaloneMode) {
+    // Verifica se já mostrou o tutorial recentemente para não chatear o usuário toda vez
+    const hasSeenGuide = localStorage.getItem('ios_install_guide_seen');
+    if (!hasSeenGuide) {
+      setTimeout(() => {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+          position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+          display: flex; align-items: flex-end; justify-content: center;
+          z-index: 2000; padding: 15px; animation: fadeIn 0.3s ease;
+        `;
+        modal.innerHTML = `
+          <div style="background: var(--card-bg, #1e293b); color: var(--text, #f8fafc); width: 100%; max-width: 400px; padding: 24px; border-radius: 24px; border: 1px solid var(--border, #475569); box-shadow: 0 20px 40px rgba(0,0,0,0.4); text-align: center;">
+            <div style="font-size: 1.2rem; font-weight: 800; margin-bottom: 8px;">Instale nosso App no iPhone</div>
+            <p style="font-size: 0.85rem; opacity: 0.85; margin-bottom: 20px; line-height: 1.4;">
+              Para a melhor experiência, adicione este calendário à sua Tela de Início tocando no ícone de compartilhamento <span style="font-size: 1.2rem;">⎋</span> e depois em <b>"Adicionar à Tela de Início"</b>.
+            </p>
+            <button id="ios-got-it-btn" style="background: var(--accent, #6f9c22); color: #fff; border: none; width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; font-size: 0.95rem; cursor: pointer;">Entendido</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById('ios-got-it-btn').addEventListener('click', () => {
+          modal.remove();
+          localStorage.setItem('ios_install_guide_seen', 'true');
+        });
+      }, 2000); // Mostra o aviso 2 segundos após abrir o site
+    }
+  }
+}
+
+// Executa a verificação ao carregar a página
+window.addEventListener('load', detectIosAndShowGuide);
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Previne o banner padrão do navegador de aparecer imediatamente
+  e.preventDefault();
+  deferredPrompt = e;
+
+  // Cria o elemento do seu banner personalizado se ele ainda não existir
+  if (!document.getElementById('pwa-install-banner')) {
+    const banner = document.createElement('div');
+    banner.id = 'pwa-install-banner';
+    banner.style.cssText = `
+      position: fixed; bottom: 20px; left: 20px; right: 20px;
+      background: var(--card-bg, #1e293b); color: var(--text, #f8fafc);
+      padding: 16px; border-radius: 16px; border: 1px solid var(--border, #475569);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: flex;
+      align-items: center; justify-content: space-between; z-index: 1000;
+      font-family: inherit;
+    `;
+    banner.innerHTML = `
+      <div>
+        <div style="font-weight: 700; font-size: 0.95rem;">Instalar Aplicativo</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">Adicione o agendador à tela inicial para acesso rápido.</div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button id="pwa-install-btn" style="background: var(--accent, #6f9c22); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">Instalar</button>
+        <button id="pwa-close-btn" style="background: transparent; color: var(--text-muted, #94a3b8); border: none; padding: 8px; cursor: pointer; font-size: 1.1rem;">✕</button>
+      </div>
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+      banner.remove();
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('Usuário aceitou instalar o PWA');
+      }
+      deferredPrompt = null;
+    });
+
+    document.getElementById('pwa-close-btn').addEventListener('click', () => {
+      banner.remove();
+    });
+  }
+});
