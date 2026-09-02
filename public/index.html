@@ -4,34 +4,55 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agenda Light - Precision Booking</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div class="calendar-container">
-    <div class="month-page" id="page">
-      
-      <div class="top-toolbar">
-        <select id="globalRoomFilter" class="room-filter-select" onchange="applyGlobalFilter()">
-          <option value="">🔍 Filtrar Sala (Todas)</option>
+
+    <div class="header-title-container">
+      <h1 class="main-page-title">COC</h1>
+      <h3 class="main-page-subtitle">LABORATÓRIOS</h3>
+    </div>
+
+    <div class="top-controls-bar">
+      <!-- Linha de Cima: Botões Lado a Lado -->
+      <div class="top-buttons-row">
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleDarkMode()">
+          <span class="theme-icon" id="themeIcon">🌘</span>
+          <span class="theme-text" id="themeText">Modo Escuro</span>
+        </button>
+        
+        <button class="monthly-toggle-btn" id="monthlyViewBtn" onclick="toggleMonthlyView()">
+          <span>📅</span> Visão Mensal
+        </button>
+      </div>
+
+      <!-- Linha de Baixo: Filtro de Sala Horizontal -->
+      <div class="room-filter-container">
+        <label for="globalRoomFilter">Filtrar Sala:</label>
+        <select id="globalRoomFilter" onchange="applyRoomFilter()">
+          <option value="">Todas as Salas</option>
           <option value="Informática">Informática</option>
           <option value="Auditório">Auditório</option>
           <option value="Química">Química</option>
           <option value="Matemática">Matemática</option>
         </select>
-        <button class="toolbar-btn" id="viewToggleBtn" onclick="toggleFullMonthView()">Visão Mensal</button>
       </div>
+    </div>
 
+    <div class="month-page" id="page">
+      
       <div class="month-navigation">
-        <div class="nav-arrow" onclick="changeMonth(-1)">‹</div>
+        <div class="nav-arrow" onclick="changeMonth(-1)">◀️</div>
         <div class="month-header-large">
           <span class="month-name" id="monthLabel">JANEIRO</span>
           <span class="year-number" id="yearLabel">2026</span>
         </div>
-        <div class="nav-arrow" onclick="changeMonth(1)">›</div>
+        <div class="nav-arrow" onclick="changeMonth(1)">▶️</div>
       </div>
       
       <div class="weeks-stack" id="weeksStack"></div>
-      <div class="full-month-grid" id="fullMonthGrid"></div>
 
       <div class="day-drawer" id="dayDrawer">
         <div class="drawer-header">
@@ -43,12 +64,13 @@
           <div class="holiday-icon">🎉</div>
           <h4 class="holiday-title">Feriado</h4>
           <p class="holiday-name" id="holidayName">Nome do Feriado</p>
-          <span class="holiday-badge">Não é possível fazer agendamentos!</span>
+          <span class="holiday-badge">Não é possível fazer agendamento nesta data!</span>
         </div>
 
         <div class="events-list" id="eventsList"></div>
 
         <form class="schedule-form" id="bookingForm" onsubmit="handleSchedule(event)">
+          <h3 class="form-title">NOVO AGENDAMENTO</h3>
           <input type="text" id="eventTitle" placeholder="Nome / Professor" required>
           
           <select id="eventLocation" onchange="updateAvailableTimes()" required>
@@ -70,11 +92,6 @@
     </div>
   </div>
 
-  <!-- Botão Dark Mode Grande e Claramente Posicionado na Base -->
-  <div class="global-footer-bar">
-    <button class="dark-mode-toggle-large" id="darkModeBtn" onclick="toggleDarkMode()">
-      🌙 Alternar para Modo Escuro
-    </button>
-  </div>
+  <script src="script.js"></script>
 </body>
 </html>

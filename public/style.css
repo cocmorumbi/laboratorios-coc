@@ -1,25 +1,19 @@
 :root {
   --bg: #f8fafc;
   --card-bg: #ffffff;
-  --accent: #2563eb;
+  --accent: #6f9c22;
   --accent-light: #eff6ff;
   --text: #0f172a;
   --text-muted: #64748b;
   --border: #e2e8f0;
+  --btn-hover: #4b5057;
   --holiday: #fee2e2;
   --holiday-text: #dc2626;
-}
 
-[data-theme="dark"] {
-  --bg: #0f172a;
-  --card-bg: #1e293b;
-  --accent: #3b82f6;
-  --accent-light: #1e3a8a;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: #334155;
-  --holiday: #450a0a;
-  --holiday-text: #fca5a5;
+  --color-informatica: #00ff22;
+  --color-auditorio: #ea3333;
+  --color-quimica: #0077ff;
+  --color-matematica: #e5ff00;
 }
 
 * {
@@ -27,38 +21,72 @@
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 22px;
+  font-weight: 1500;
 }
 
-body, html {
-  height: 100vh;
-  margin: 0;
-  overflow: hidden;
+body {
   background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
   display: flex;
+  align-items: flex-start;
   justify-content: center;
-  align-items: center;
+  padding-top: 20px;
+  perspective: 1200px;
+}
+
+.header-title-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  margin-bottom: 20px !important; /* Espaço entre o título e a barra de controles */
+}
+
+.main-page-title,
+.main-page-subtitle {
+  display: block !important;
+  text-align: center !important;
+  margin: -10px !important;
+  width: 100% !important;
+}
+
+.main-page-title {
+  font-size: 3.6rem;
+  font-weight: 800;
+  letter-spacing: 8px;
+  color: var(--accent);
+}
+
+.main-page-subtitle {
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text, inherit);
+  opacity: 0.9;
+  margin-bottom: 1px;
 }
 
 .calendar-container {
-  width: 90%;
-  max-width: 480px;
-  height: 720px;
+  width: 50%;
+  max-width: 600px;
   position: relative;
 }
 
 .month-page {
   position: absolute;
   width: 100%;
-  height: 100%;
   background: var(--card-bg);
   border-radius: 28px;
   border: 1px solid var(--border);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.06);
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   transform-origin: right center;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s, background 0.3s, border-color 0.3s;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s;
   overflow: hidden;
 }
 
@@ -73,131 +101,79 @@ body, html {
   opacity: 0;
 }
 
-.top-toolbar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.room-filter-select {
-  flex: 1;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 0.8rem;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-}
-
-.toolbar-btn {
-  background: var(--accent-light);
-  color: var(--accent);
-  border: 1px solid var(--border);
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.toolbar-btn:hover {
-  background: var(--accent);
-  color: #fff;
-}
-
 .month-navigation {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
-  flex-shrink: 0;
+  margin-bottom: 20px;
 }
 
 .month-header-large {
   display: flex;
-  gap: 8px;
-  font-size: 1.25rem;
+  gap: 10px;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
 
 .month-header-large .month-name {
   color: var(--text);
+  gap: 12px;
+  font-size: 2rem; /* Aumentado para dar mais destaque */
+  font-weight: 900; /* Texto mais encorpado */
+  letter-spacing: -1px;
   text-transform: uppercase;
+  text-shadow: 0 3px 5px #5b5c5b;
 }
 
 .month-header-large .year-number {
   color: var(--accent);
+  gap: 12px;
+  font-size: 2rem; /* Aumentado para dar mais destaque */
+  font-weight: 900; /* Texto mais encorpado */
+  letter-spacing: -1px;
+  text-shadow: 0 3px 5px #1e1f1e;
 }
 
 .nav-arrow {
-  background: var(--accent-light);
-  color: var(--accent);
-  border: 1px solid var(--border);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  background: var(--border);
+  color: var(--text);
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .nav-arrow:hover {
-  background: var(--accent);
-  color: #fff;
+  background: var(--text-muted);
+  color: var(--border);
 }
 
-/* Pilha de Semanas com Transição Suave */
 .weeks-stack {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  overflow-y: auto;
-  padding-right: 2px;
-  transition: opacity 0.3s ease-in-out, filter 0.3s ease-in-out;
-}
-
-/* Visão de Grade Mensal Completa com Transição Suave */
-.full-month-grid {
-  flex: 1;
-  display: none;
-  grid-template-columns: repeat(5, 1fr);
-  grid-auto-rows: minmax(0, 1fr);
-  gap: 6px;
-  overflow-y: auto;
-  padding-bottom: 10px;
-  transition: opacity 0.3s ease-in-out, filter 0.3s ease-in-out;
-}
-
-.full-month-grid.visible {
-  display: grid;
-}
-
-.weeks-stack.hidden {
-  display: none;
+  gap: 12px;
+  overflow: hidden;
+  padding-right: 4px;
 }
 
 .week-card {
   background: var(--bg);
-  border-radius: 16px;
-  padding: 10px 12px;
+  border-radius: 18px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0.35;
-  filter: blur(1.5px);
-  transform: scale(0.96);
+  filter: blur(2px);
+  transform: scale(0.94);
   cursor: pointer;
 }
 
@@ -206,16 +182,16 @@ body, html {
   filter: blur(0px);
   transform: scale(1);
   background: var(--card-bg);
-  border-color: var(--accent);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border-color: var(--bg);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.08);
   cursor: default;
 }
 
 .week-title {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-muted);
-  margin-bottom: 6px;
+  color: var(--text);
+  margin-bottom: 8px;
   text-transform: uppercase;
 }
 
@@ -226,50 +202,28 @@ body, html {
 }
 
 .day-pill {
-  background: var(--bg);
-  padding: 8px 4px;
+  background: var(--border);
+  padding: 8px 4px 22px 4px;
   border-radius: 12px;
   text-align: center;
   transition: all 0.2s;
   user-select: none;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
-  border: 1px solid transparent;
-}
-
-.week-card.active .day-pill:hover,
-.full-month-grid .day-pill:hover {
-  background: var(--accent-light);
-  cursor: pointer;
-}
-
-.week-card:not(.active) .day-pill {
-  pointer-events: none;
-}
-
-.day-pill.empty-pill {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  pointer-events: none;
-  visibility: hidden;
-}
-
-.day-pill.filtered-out {
-  opacity: 0.2;
-  filter: grayscale(100%);
-  pointer-events: none;
+  justify-content: flex-start;
+  min-height: 64px;
 }
 
 .day-dots-container {
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
-  max-width: 100%;
-  min-height: 8px;
+  max-width: 36px;
+  min-height: 2px;
   margin-top: 4px;
+  justify-content: center;
 }
 
 .calendar-dot {
@@ -279,6 +233,15 @@ body, html {
   display: inline-block;
 }
 
+.week-card.active .day-pill:hover {
+  background: var(--accent-light);
+  cursor: pointer;
+}
+
+.week-card:not(.active) .day-pill {
+  pointer-events: none;
+}
+
 .day-pill.holiday {
   background: var(--holiday);
   color: var(--holiday-text);
@@ -286,29 +249,21 @@ body, html {
 
 .day-pill .name {
   font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--accent);
+  color: var(--text-muted);
   display: block;
-  margin-bottom: 2px;
-}
-
-.day-pill.holiday .name {
-  color: var(--holiday-text);
 }
 
 .day-pill .number {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
 }
 
-/* Gaveta de Detalhes do Dia */
 .day-drawer {
   position: absolute;
   inset: 0;
   background: var(--card-bg);
   border-radius: 28px;
-  padding: 20px;
+  padding: 24px;
   display: none;
   flex-direction: column;
   transform: translateY(100%);
@@ -321,25 +276,29 @@ body, html {
   transform: translateY(0%);
 }
 
+.day-pill.today {
+  border: 3px solid var(--accent) !important;
+  box-shadow: 0 0 10px #49f017c0 !important;
+}
+
 .drawer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .drawer-title {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 800;
   text-transform: capitalize;
-  color: var(--text);
 }
 
 .close-btn {
   background: var(--bg);
-  border: 1px solid var(--border);
-  width: 30px;
-  height: 30px;
+  border: none;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   cursor: pointer;
   font-weight: bold;
@@ -352,16 +311,14 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .event-card {
-  background: var(--bg);
-  border-left: 6px solid #ccc;
+  background: var(--border);
+  border-left: 8px solid #ccc;
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid var(--border);
-  border-left-width: 6px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   display: flex;
   flex-direction: column;
@@ -381,33 +338,29 @@ body, html {
 }
 
 .event-time {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 .event-location {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
   color: #000;
 }
 
-.event-name {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
 .btn-delete {
-  background: transparent;
-  border: none;
+  background: #f00606;
+  border: 5px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 0.9rem;
-  opacity: 0.6;
+  font-size: 0.7rem;
+  opacity: 1.0;
   transition: opacity 0.2s, transform 0.2s;
-  padding: 2px;
+  padding: 4px 10px;
+  color: var(--text);
 }
 
 .btn-delete:hover {
@@ -415,14 +368,19 @@ body, html {
   transform: scale(1.15);
 }
 
+.event-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .no-events {
   text-align: center;
   color: var(--text-muted);
   margin: auto 0;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
-/* Aviso de Feriado */
 .holiday-notice {
   display: none;
   flex-direction: column;
@@ -430,41 +388,41 @@ body, html {
   justify-content: center;
   text-align: center;
   flex: 1;
-  background: var(--holiday);
-  border: 1px solid var(--border);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 12px;
 }
 
 .holiday-icon {
-  font-size: 2.2rem;
+  font-size: 2.5rem;
   margin-bottom: 8px;
 }
 
 .holiday-title {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 800;
   text-transform: uppercase;
-  color: var(--holiday-text);
+  color: #dc2626;
   letter-spacing: 0.5px;
 }
 
 .holiday-name {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: var(--text);
+  color: #991b1b;
   margin: 4px 0 16px 0;
 }
 
 .holiday-badge {
-  background: var(--card-bg);
-  color: var(--holiday-text);
-  font-size: 0.7rem;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.75rem;
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 20px;
-  border: 1px solid var(--border);
+  border: 1px solid #fca5a5;
 }
 
 .schedule-form {
@@ -472,18 +430,25 @@ body, html {
   flex-direction: column;
   gap: 8px;
   border-top: 1px solid var(--border);
-  padding-top: 10px;
+  padding-top: 12px;
 }
 
-.schedule-form input, 
-.schedule-form select {
+.form-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color, inherit);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.schedule-form input, .schedule-form select {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg);
-  font-size: 0.8rem;
+  font-size: 0.87rem;
   outline: none;
-  color: var(--text);
+  color: var(--text-color, inherit);
 }
 
 .schedule-form select:disabled {
@@ -503,35 +468,118 @@ body, html {
 }
 
 .schedule-form button:hover {
-  background: #1d4ed8;
+  background: #012e0c;
 }
 
-.global-footer-bar {
-  width: 100%;
-  max-width: 480px;
-  margin-top: 10px;
-  display: flex;
+body.dark-mode {
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #6f9c22;
+  --accent-light: #808488;
+  --border: #475569;
+  --input-bg: #334155;
+  --btn-bg: #334155;
+  --btn-hover: #8f9296;
 }
 
-.dark-mode-toggle-large {
-  width: 100%;
-  background: var(--card-bg);
+body {
+  background: var(--bg);
   color: var(--text);
-  border: 1px solid var(--border);
-  padding: 12px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.top-controls-bar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin-bottom: 15px;
+  margin-top: 1px;
+}
+
+.top-buttons-row {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  max-width: 380px !important;
+}
+
+.top-buttons-row button {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 140px !important;
+}
+
+/* Container do filtro de sala (fica logo abaixo, em formato horizontal) */
+.room-filter-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 100;
+}
+
+.room-filter-container label {
+  font-size: 25px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.room-filter-container select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background-color: var(--input-bg);
+  color: var(--text-main);
+  font-size: 18px;
+  outline: none;
+}
+
+/* Estilo unificado para os botões dividirem o espaço igualmente */
+.theme-toggle-btn,
+.monthly-toggle-btn {
+  flex: 1;
+  width: auto !important;
+  min-width: 140px;
+  background: var(--card-bg);
+  border: 2px solid var(--btn-hover);
+  color: var(--text);
+  padding: 8px 12px;
   border-radius: 16px;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-.dark-mode-toggle-large:hover {
-  background: var(--accent-light);
-  color: var(--accent);
+.theme-toggle-btn:hover,
+.monthly-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: currentColor;
+}
+
+.theme-toggle-btn:active {
+  transform: translateY(0);
+}
+
+/* Quando a visão mensal estiver ativada */
+#weeksStack.monthly-view .week-card {
+  filter: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  margin-bottom: 12px;
 }

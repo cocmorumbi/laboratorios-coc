@@ -2,8 +2,11 @@ let currentDate = new Date();
 let activeWeekIdx = 0;
 let selectedDayKey = null;
 let currentDayEvents = [];
-let isFullMonthView = false;
+let holidaysMap = {}; // Agora os feriados são carregados dinamicamente
 let dayAppointmentsCache = {};
+let appointmentsMap = {}; // Variável global de cache para os agendamentos do mês
+let selectedGlobalRoom = "";
+let isFetchingDots = false;
 
 const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const daysName = ["Seg", "Ter", "Qua", "Qui", "Sex"];
@@ -20,106 +23,166 @@ const roomColors = {
   "Matemática": "#e5ff00"
 };
 
-let holidaysMap = {};
-let loadedHolidaysYear = null;
-
-window.addEventListener('DOMContentLoaded', () => {
-  const filterEl = document.getElementById('globalRoomFilter');
-  if (filterEl) {
-    filterEl.value = "";
-    filterEl.addEventListener('change', applyGlobalFilter);
-  }
-
-  const roomSelect = document.getElementById('eventLocation');
-  const bookingForm = document.getElementById('bookingForm');
-
-  if (roomSelect) roomSelect.addEventListener('change', updateAvailableTimes);
-  if (bookingForm) bookingForm.addEventListener('submit', handleSchedule);
-
-  renderWeeks();
-  setupScrollListeners();
-});
-
-function setupScrollListeners() {
-  const stack = document.getElementById('weeksStack');
-  let isScrolling = false;
-
-  if (!stack) return;
-
-  stack.addEventListener('wheel', e => {
-    if (isFullMonthView) return;
-    e.preventDefault();
-    if (isScrolling) return;
-    isScrolling = true;
-
-    if (e.deltaY > 0) {
-      if (activeWeekIdx < stack.children.length - 1) {
-        setActiveWeek(activeWeekIdx + 1);
-      }
-    } else {
-      if (activeWeekIdx > 0) {
-        setActiveWeek(activeWeekIdx - 1);
-      }
-    }
-
-    setTimeout(() => {
-      isScrolling = false;
-    }, 400);
-  }, { passive: false });
-
-  let touchStartY = 0;
-  stack.addEventListener('touchstart', e => {
-    touchStartY = e.touches[0].clientY;
-  });
-
-  stack.addEventListener('touchmove', e => {
-    if (isFullMonthView) return;
-    const touchEndY = e.touches[0].clientY;
-    const diff = touchStartY - touchEndY;
-
-    if (Math.abs(diff) > 40 && !isScrolling) {
-      isScrolling = true;
-      if (diff > 0 && activeWeekIdx < stack.children.length - 1) {
-        setActiveWeek(activeWeekIdx + 1);
-      } else if (diff < 0 && activeWeekIdx > 0) {
-        setActiveWeek(activeWeekIdx - 1);
-      }
-      setTimeout(() => {
-        isScrolling = false;
-      }, 400);
-    }
-  });
-}
-
+// Função para buscar feriados nacionais online usando a BrasilAPI
 async function fetchHolidays(year) {
-  if (loadedHolidaysYear === year) return;
-
   try {
-    const res = await fetch(`https://brasilapi.com.br/api/feriados/v1/${year}`);
-    if (!res.ok) return;
+    const response = await fetch(`https://brasilapi.com.br/api/feriados/v1/${year}`);
+    const data = await response.json();
     
-    const holidays = await res.json();
-    holidaysMap = {}; 
-
-    holidays.forEach(h => {
-      const [y, m, d] = h.date.split('-');
-      holidaysMap[`${m}-${d}`] = h.name;
+    holidaysMap = {};
+    data.forEach(holiday => {
+      // Extrai apenas o formato "MM-DD" da data completa "YYYY-MM-DD"
+      const mm_dd = holiday.date.slice(5); 
+      holidaysMap[mm_dd] = holiday.name;
     });
 
-    loadedHolidaysYear = year;
+    renderWeeks(); // Re-renderiza o calendário após obter os feriados
   } catch (err) {
-    console.error('Erro ao buscar feriados:', err);
+    console.error('Erro ao buscar feriados online:', err);
+    renderWeeks(); // Renderiza mesmo se falhar para o calendário não travar
   }
 }
 
 function updateHeader() {
-  const monthLabel = document.getElementById('monthLabel');
-  const yearLabel = document.getElementById('yearLabel');
-  if (monthLabel) monthLabel.innerText = monthNames[currentDate.getMonth()];
-  if (yearLabel) yearLabel.innerText = currentDate.getFullYear();
+  document.getElementById('monthLabel').innerText = monthNames[currentDate.getMonth()];
+  document.getElementById('yearLabel').innerText = currentDate.getFullYear();
 }
 
-let isFetchingDots = false;
+function renderWeeks() {
+  const container = document.getElementById('weeksStack');
+  container.innerHTML = '';
+  updateHeader();
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  let weeks = [];
+  let currentWeek = [];
+
+  for (let day = 1; day <= totalDaysInMonth; day++) {
+    const dateObj = new Date(year, month, day);
+    const dayOfWeek = dateObj.getDay();
+
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      if (dayOfWeek === 1 && currentWeek.length > 0) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+      
+      if (weeks.length === 0 && currentWeek.length === 0 && dayOfWeek > 1) {
+        for (let i = 1; i < dayOfWeek; i++) {
+          currentWeek.push(null);
+        }
+      }
+
+      currentWeek.push({ dayNumber: day, dayOfWeek: dayOfWeek - 1, fullDate: dateObj });
+    }
+  }
+  
+  if (currentWeek.length > 0) {
+    weeks.push(currentWeek);
+  }
+
+  weeks.forEach((week, wIdx) => {
+    const weekCard = document.createElement('div');
+    weekCard.className = `week-card ${wIdx === activeWeekIdx ? 'active' : ''}`;
+    
+    weekCard.onclick = () => {
+      if (activeWeekIdx !== wIdx) setActiveWeek(wIdx);
+    };
+    
+    let html = `<div class="week-title">Semana ${wIdx + 1}</div><div class="days-row">`;
+
+    for (let d = 0; d < 5; d++) {
+      const dayData = week.find(item => item && item.dayOfWeek === d);
+
+      if (!dayData) {
+        html += `<div class="day-pill" style="opacity: 0"></div>`;
+      } else {
+        const mm = String(month + 1).padStart(2, '0');
+        const dd = String(dayData.dayNumber).padStart(2, '0');
+        const holidayKey = `${mm}-${dd}`;
+        const holidayName = holidaysMap[holidayKey];
+        const dateKey = `${year}-${mm}-${dd}`;
+
+        let dayEvents = appointmentsMap[dateKey] ? [...appointmentsMap[dateKey]] : [];
+        
+        if (selectedGlobalRoom) {
+          dayEvents = dayEvents.filter(ev => ev.location === selectedGlobalRoom);
+        }
+
+        const limitedEvents = dayEvents.slice(0, 12);
+        
+        // Ajustado para usar as classes exatas do seu CSS
+        let dotsHtml = '<div class="day-dots-container">';
+        limitedEvents.forEach(ev => {
+          const color = roomColors[ev.location] || '#2563eb';
+          dotsHtml += `<span class="calendar-dot" style="background-color: ${color};"></span>`;
+        });
+        dotsHtml += '</div>';
+        
+        const todayObj = new Date();
+        const isToday = dayData.dayNumber === todayObj.getDate() && month === todayObj.getMonth() && year === todayObj.getFullYear();
+
+        html += `
+          <div class="day-pill ${holidayName ? 'holiday' : ''} ${isToday ? 'today' : ''}" 
+                onclick="event.stopPropagation(); handleDayClick('${dateKey}', '${daysName[d]}', ${dayData.dayNumber}, '${holidayName || ''}', ${wIdx})">
+            <span class="name">${daysName[d]}</span>
+            <span class="number">${dayData.dayNumber}</span>
+            ${holidayName ? '' : dotsHtml}
+          </div>`;
+      }
+    }
+
+    html += `</div>`;
+    weekCard.innerHTML = html;
+    container.appendChild(weekCard);
+  });
+}
+
+async function renderEvents() {
+  const list = document.getElementById('eventsList');
+  list.innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/appointments/${selectedDayKey}`);
+    currentDayEvents = await res.json();
+
+    // Aplica o filtro global de salas se houver alguma selecionada
+    let eventsToDisplay = currentDayEvents;
+    if (selectedGlobalRoom) {
+      eventsToDisplay = currentDayEvents.filter(ev => ev.location === selectedGlobalRoom);
+    }
+
+    if (eventsToDisplay.length === 0) {
+      const msg = selectedGlobalRoom 
+        ? `Nenhum agendamento para a sala "${selectedGlobalRoom}" neste dia.` 
+        : `Nenhum compromisso marcado para este dia.`;
+      list.innerHTML = `<div class="no-events">${msg}</div>`;
+      return;
+    }
+
+    eventsToDisplay.forEach(ev => {
+      const color = roomColors[ev.location] || '#2563eb';
+      const eventIdentifier = ev._id ? `'${ev._id}'` : `'${ev.time}', '${ev.location}'`;
+
+      list.innerHTML += `
+        <div class="event-card" style="border-left-color: ${color}">
+          <div class="event-header">
+            <div class="event-header-left">
+              <span class="event-time">⏰ ${ev.time}</span>
+              <span class="event-location" style="background-color: ${color}">${ev.location}</span>
+            </div>
+            <button class="btn-delete" title="Cancelar Agendamento" onclick="cancelAppointment(${eventIdentifier})">CANCELAR</button>
+          </div>
+          <span class="event-name">Reservado por: ${ev.title}</span>
+        </div>`;
+    });
+  } catch (err) {
+    console.error('Erro ao carregar eventos:', err);
+  }
+}
 
 async function loadCalendarDots() {
   if (isFetchingDots) return;
@@ -131,30 +194,41 @@ async function loadCalendarDots() {
   const yearMonth = `${year}-${mm}`;
   
   dayAppointmentsCache = {};
+  appointmentsMap = {};
 
   try {
-    const res = await fetch(`/api/appointments/month/${yearMonth}`);
+    const res = await fetch('/api/appointments');
     if (res.ok) {
       const allAppointments = await res.json();
+      const monthAppointments = allAppointments.filter(app => app.dayKey && app.dayKey.startsWith(yearMonth));
 
-      allAppointments.forEach(app => {
+      monthAppointments.forEach(app => {
         if (!dayAppointmentsCache[app.dayKey]) {
           dayAppointmentsCache[app.dayKey] = [];
         }
         dayAppointmentsCache[app.dayKey].push(app);
+
+        if (!appointmentsMap[app.dayKey]) {
+          appointmentsMap[app.dayKey] = [];
+        }
+        appointmentsMap[app.dayKey].push(app);
       });
 
-      Object.keys(dayAppointmentsCache).forEach(dateKey => {
-        renderDotsForDay(dateKey, dayAppointmentsCache[dateKey]);
-      });
+      if (selectedGlobalRoom) {
+        Object.keys(appointmentsMap).forEach(dateKey => {
+          appointmentsMap[dateKey] = appointmentsMap[dateKey].filter(
+            app => app.location === selectedGlobalRoom
+          );
+        });
+      }
+
+      renderWeeks();
     }
   } catch (err) {
     console.error('Erro ao carregar dots:', err);
   } finally {
     isFetchingDots = false;
   }
-
-  applyGlobalFilter();
 }
 
 function renderDotsForDay(dateKey, appointments) {
@@ -179,203 +253,6 @@ function renderDotsForDay(dateKey, appointments) {
   });
 }
 
-function applyGlobalFilter() {
-  const selectedRoom = document.getElementById('globalRoomFilter')?.value || "";
-  
-  Object.keys(dayAppointmentsCache).forEach(dateKey => {
-    const apps = dayAppointmentsCache[dateKey] || [];
-    renderDotsForDay(dateKey, apps);
-  });
-
-  if (selectedDayKey && document.getElementById('dayDrawer')?.classList.contains('open')) {
-    renderEvents();
-  }
-}
-
-async function toggleFullMonthView() {
-  isFullMonthView = !isFullMonthView;
-  const weeksStack = document.getElementById('weeksStack');
-  const fullGrid = document.getElementById('fullMonthGrid');
-  const btn = document.getElementById('viewToggleBtn');
-
-  if (isFullMonthView) {
-    if (btn) btn.innerText = "Visão Semanal";
-    
-    if (weeksStack) {
-      weeksStack.classList.remove('view-visible');
-      weeksStack.classList.add('view-hidden');
-    }
-    
-    await renderFullMonthGrid();
-    
-    if (fullGrid) {
-      fullGrid.classList.remove('view-hidden');
-      fullGrid.classList.add('view-visible');
-    }
-
-    await loadCalendarDots();
-
-  } else {
-    if (btn) btn.innerText = "Visão Mensal";
-    
-    if (fullGrid) {
-      fullGrid.classList.remove('view-visible');
-      fullGrid.classList.add('view-hidden');
-    }
-    
-    await renderWeeks();
-    
-    if (weeksStack) {
-      weeksStack.classList.remove('view-hidden');
-      weeksStack.classList.add('view-visible');
-    }
-
-    await loadCalendarDots();
-  }
-}
-
-async function renderFullMonthGrid() {
-  const container = document.getElementById('fullMonthGrid');
-  if (!container) return;
-
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
-
-  await fetchHolidays(year);
-  container.innerHTML = '';
-  updateHeader();
-
-  const firstDateObj = new Date(year, month, 1);
-  let firstDayOfWeek = firstDateObj.getDay();
-
-  // Correção robusta para inserir os espaços vazios (empty-pill) de acordo com o dia da semana do dia 1º
-  // Domingo (0) ou Sábado (6) caem fora dos dias úteis, logo o mês útil visual começa na próxima segunda (4 ou 5 espaços)
-  // Segunda (1) = 0 espaços, Terça (2) = 1 espaço, Quarta (3) = 2 espaços, Quinta (4) = 3 espaços, Sexta (5) = 4 espaços
-  let emptySlots = 0;
-  if (firstDayOfWeek === 0) {
-    emptySlots = 4;
-  } else if (firstDayOfWeek === 6) {
-    emptySlots = 5;
-  } else {
-    emptySlots = firstDayOfWeek - 1;
-  }
-
-  for (let i = 0; i < emptySlots; i++) {
-    const emptyDiv = document.createElement('div');
-    emptyDiv.className = 'day-pill empty-pill';
-    container.appendChild(emptyDiv);
-  }
-
-  for (let day = 1; day <= totalDaysInMonth; day++) {
-    const dateObj = new Date(year, month, day);
-    const dayOfWeek = dateObj.getDay();
-
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      const mm = String(month + 1).padStart(2, '0');
-      const dd = String(day).padStart(2, '0');
-      const holidayKey = `${mm}-${dd}`;
-      const holidayName = holidaysMap[holidayKey];
-      const dateKey = `${year}-${mm}-${dd}`;
-      const dName = daysName[dayOfWeek - 1];
-
-      const pill = document.createElement('div');
-      pill.className = `day-pill ${holidayName ? 'holiday' : ''}`;
-      pill.setAttribute('data-date', dateKey);
-      pill.onclick = () => openDay(dateKey, dName, day, holidayName || '');
-      
-      pill.innerHTML = `
-        <span class="name">${dName}</span>
-        <span class="number">${day}</span>
-        <div class="day-dots-container dots-${dateKey}"></div>
-      `;
-      container.appendChild(pill);
-    }
-  }
-  await loadCalendarDots();
-}
-
-async function renderWeeks() {
-  const container = document.getElementById('weeksStack');
-  if (!container) return;
-
-  const year = currentDate.getFullYear();
-  await fetchHolidays(year);
-
-  container.innerHTML = '';
-  updateHeader();
-
-  const month = currentDate.getMonth();
-  const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
-  
-  let weeks = [];
-  let currentWeek = [];
-
-  for (let day = 1; day <= totalDaysInMonth; day++) {
-    const dateObj = new Date(year, month, day);
-    const dayOfWeek = dateObj.getDay();
-
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      if (dayOfWeek === 1 && currentWeek.length > 0) {
-        weeks.push(currentWeek);
-        currentWeek = [];
-      }
-      currentWeek.push({ dayNumber: day, dayOfWeek: dayOfWeek - 1, fullDate: dateObj });
-    }
-  }
-  if (currentWeek.length > 0) weeks.push(currentWeek);
-
-  weeks.forEach((week, wIdx) => {
-    const weekCard = document.createElement('div');
-    weekCard.className = `week-card ${wIdx === activeWeekIdx ? 'active' : ''}`;
-    
-    weekCard.onclick = () => {
-      if (activeWeekIdx !== wIdx) setActiveWeek(wIdx);
-    };
-    
-    let html = `<div class="week-title">Semana ${wIdx + 1}</div><div class="days-row">`;
-
-    for (let d = 0; d < 5; d++) {
-      const dayData = week.find(item => item && item.dayOfWeek === d);
-
-      if (!dayData) {
-        html += `<div class="day-pill empty-pill"></div>`;
-      } else {
-        const mm = String(month + 1).padStart(2, '0');
-        const dd = String(dayData.dayNumber).padStart(2, '0');
-        const holidayName = holidaysMap[`${mm}-${dd}`];
-        const dateKey = `${year}-${mm}-${dd}`;
-
-        html += `
-          <div class="day-pill ${holidayName ? 'holiday' : ''}" data-date="${dateKey}">
-            <span class="name">${daysName[d]}</span>
-            <span class="number">${dayData.dayNumber}</span>
-            <div class="day-dots-container dots-${dateKey}"></div>
-          </div>`;
-      }
-    }
-    html += `</div>`;
-    weekCard.innerHTML = html;
-    
-    weekCard.querySelectorAll('.day-pill:not(.empty-pill)').forEach(pill => {
-      const dKey = pill.getAttribute('data-date');
-      const parts = dKey.split('-');
-      const dNum = parseInt(parts[2], 10);
-      const hName = holidaysMap[`${parts[1]}-${parts[2]}`] || '';
-      const dName = pill.querySelector('.name').innerText;
-
-      pill.onclick = (ev) => {
-        ev.stopPropagation();
-        handleDayClick(dKey, dName, dNum, hName, wIdx);
-      };
-    });
-
-    container.appendChild(weekCard);
-  });
-
-  await loadCalendarDots();
-}
-
 function setActiveWeek(index) {
   const cards = document.querySelectorAll('.week-card');
   if (index < 0 || index >= cards.length) return;
@@ -383,6 +260,25 @@ function setActiveWeek(index) {
   cards.forEach((card, idx) => {
     card.classList.toggle('active', idx === activeWeekIdx);
   });
+}
+
+async function fetchAllAppointments() {
+  try {
+    const res = await fetch('/api/appointments');
+    const data = await res.json();
+    
+    appointmentsMap = {};
+    data.forEach(ev => {
+      if (!appointmentsMap[ev.dayKey]) {
+        appointmentsMap[ev.dayKey] = [];
+      }
+      appointmentsMap[ev.dayKey].push(ev);
+    });
+  } catch (err) {
+    console.error('Erro ao buscar todos os agendamentos:', err);
+  } finally {
+    renderWeeks(); // Desenha os dots atualizados no calendário
+  }
 }
 
 function handleDayClick(dateKey, weekDayName, dayNum, holidayName, weekIndex) {
@@ -393,17 +289,20 @@ function handleDayClick(dateKey, weekDayName, dayNum, holidayName, weekIndex) {
   openDay(dateKey, weekDayName, dayNum, holidayName);
 }
 
-async function changeMonth(direction) {
+function changeMonth(direction) {
   const page = document.getElementById('page');
-  if (!page) return;
-
-  page.classList.add(direction > 0 ? 'flip-out-next' : 'flip-out-prev');
+  const animationClass = direction > 0 ? 'flip-out-next' : 'flip-out-prev';
+  
+  page.classList.add(animationClass);
 
   setTimeout(async () => {
     currentDate.setMonth(currentDate.getMonth() + direction);
     activeWeekIdx = 0;
-    if (isFullMonthView) await renderFullMonthGrid();
-    else await renderWeeks();
+    
+    // Busca os feriados do novo ano/mês antes de re-renderizar
+    await fetchHolidays(currentDate.getFullYear());
+    await fetchAllAppointments(); // Atualiza os dots para o novo mês
+    
     page.classList.remove('flip-out-next', 'flip-out-prev');
   }, 500);
 }
@@ -411,38 +310,44 @@ async function changeMonth(direction) {
 function formatNiceDate(dateKey) {
   const [year, month, day] = dateKey.split('-').map(Number);
   const dateObj = new Date(year, month - 1, day);
-  let formatted = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const options = { weekday: 'long', day: 'numeric', month: 'long' };
+  let formatted = dateObj.toLocaleDateString('pt-BR', options);
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
 function resetForm() {
-  const eventTitle = document.getElementById('eventTitle');
-  if (eventTitle) eventTitle.value = '';
-
-  const globalFilterVal = document.getElementById('globalRoomFilter')?.value || "";
-  const roomSelect = document.getElementById('eventLocation');
+  document.getElementById('eventTitle').value = '';
+  document.getElementById('eventLocation').value = '';
   
-  if (!roomSelect) return;
+  const selectTime = document.getElementById('eventTime');
+  selectTime.disabled = true;
+  selectTime.innerHTML = '<option value="" disabled selected hidden>Selecione o local primeiro</option>';
+}
 
-  if (globalFilterVal) {
-    roomSelect.value = globalFilterVal;
-    roomSelect.disabled = true;
-    updateAvailableTimes();
-  } else {
-    roomSelect.disabled = false;
-    roomSelect.value = "";
-    const selectTime = document.getElementById('eventTime');
-    if (selectTime) {
-      selectTime.disabled = true;
-      selectTime.innerHTML = '<option value="" disabled selected hidden>Selecione o local primeiro</option>';
+async function applyRoomFilter() {
+  const selectElement = document.getElementById('globalRoomFilter');
+  selectedGlobalRoom = selectElement.value;
+
+  await loadCalendarDots();
+  
+  const drawer = document.getElementById('dayDrawer');
+  if (drawer.classList.contains('open')) {
+    await renderEvents();
+    
+    const roomSelect = document.getElementById('eventLocation');
+    if (roomSelect) {
+      roomSelect.value = selectedGlobalRoom;
+      updateAvailableTimes();
     }
   }
 }
 
 async function openDay(dateKey, weekDayName, dayNum, holidayName) {
   selectedDayKey = dateKey;
-  const drawerDate = document.getElementById('drawerDate');
-  if (drawerDate) drawerDate.innerText = formatNiceDate(dateKey);
+  
+  const formattedDate = formatNiceDate(dateKey);
+  document.getElementById('drawerDate').innerText = formattedDate;
   
   const form = document.getElementById('bookingForm');
   const holidayNotice = document.getElementById('holidayNotice');
@@ -450,111 +355,133 @@ async function openDay(dateKey, weekDayName, dayNum, holidayName) {
   const eventsList = document.getElementById('eventsList');
 
   if (holidayName) {
-    if (form) form.style.display = 'none';
-    if (eventsList) eventsList.style.display = 'none';
-    if (holidayNameEl) holidayNameEl.innerText = holidayName;
-    if (holidayNotice) holidayNotice.style.display = 'flex';
+    form.style.display = 'none';
+    eventsList.style.display = 'none';
+    holidayNameEl.innerText = holidayName;
+    holidayNotice.style.display = 'flex';
   } else {
-    if (holidayNotice) holidayNotice.style.display = 'none';
-    if (eventsList) eventsList.style.display = 'flex';
-    if (form) form.style.display = 'flex';
+    holidayNotice.style.display = 'none';
+    eventsList.style.display = 'flex';
+    form.style.display = 'flex';
     resetForm();
+    
+    // Primeiro renderiza os eventos (que já filtram pela sala selecionada, se houver)
     await renderEvents();
+
+    // Se houver uma sala selecionada no filtro superior, aplica no formulário e atualiza horários
+    if (selectedGlobalRoom) {
+      const roomSelect = document.getElementById('eventLocation');
+      roomSelect.value = selectedGlobalRoom;
+      updateAvailableTimes();
+    }
   }
   
   const drawer = document.getElementById('dayDrawer');
-  if (drawer) {
-    drawer.style.display = 'flex';
-    setTimeout(() => drawer.classList.add('open'), 10);
+  drawer.style.display = 'flex';
+  
+  setTimeout(() => {
+    drawer.classList.add('open');
+  }, 10);
+}
+
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  const icon = document.getElementById('themeIcon');
+  const text = document.getElementById('themeText');
+  
+  if (isDark) {
+    icon.innerText = '☀️';
+    text.innerText = 'Modo Claro';
+    localStorage.setItem('theme', 'dark');
+  } else {
+    icon.innerText = '🌘';
+    text.innerText = 'Modo Escuro';
+    localStorage.setItem('theme', 'light');
   }
 }
+
+function toggleMonthlyView() {
+  const stack = document.getElementById('weeksStack');
+  const btn = document.getElementById('monthlyViewBtn');
+  
+  stack.classList.toggle('monthly-view');
+  
+  const isMonthly = stack.classList.contains('monthly-view');
+  btn.innerText = isMonthly ? '📆 Visão Semanal' : '📅 Visão Mensal';
+}
+
+// Atualize também o carregamento ao iniciar a página (DOMContentLoaded)
+window.addEventListener('DOMContentLoaded', async () => {
+  if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+    const icon = document.getElementById('themeIcon');
+    const text = document.getElementById('themeText');
+    if (icon && text) {
+      icon.innerText = '☀️';
+      text.innerText = 'Modo Claro';
+    }
+  }
+
+  selectedGlobalRoom = "";
+  const filterSelect = document.getElementById('globalRoomFilter');
+  if (filterSelect) {
+    filterSelect.value = "";
+  }
+
+  updateHeader();
+  
+  // Carrega feriados e agendamentos ao iniciar
+  await fetchHolidays(currentDate.getFullYear());
+  await fetchAllAppointments();
+});
 
 function closeDrawer() {
   const drawer = document.getElementById('dayDrawer');
-  if (!drawer) return;
   drawer.classList.remove('open');
-  setTimeout(() => { drawer.style.display = 'none'; }, 800);
+  
+  setTimeout(() => {
+    drawer.style.display = 'none';
+  }, 800);
 }
 
-async function renderEvents() {
-  const list = document.getElementById('eventsList');
-  if (!list) return;
-  list.innerHTML = '';
-
-  const globalRoomFilter = document.getElementById('globalRoomFilter')?.value || "";
+async function cancelAppointment(idOrTime, location) {
+  const confirmed = confirm("Tem certeza de que deseja cancelar este agendamento?");
+  if (!confirmed) return;
 
   try {
-    const res = await fetch(`/api/appointments/${selectedDayKey}`);
-    if (!res.ok) return;
-    currentDayEvents = await res.json();
-    dayAppointmentsCache[selectedDayKey] = currentDayEvents;
+    let url = `/api/appointments/${selectedDayKey}`;
+    let options = {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    };
 
-    let eventsToDisplay = currentDayEvents;
-    if (globalRoomFilter) {
-      eventsToDisplay = currentDayEvents.filter(ev => ev.location === globalRoomFilter);
+    if (location) {
+      options.body = JSON.stringify({ time: idOrTime, location });
+    } else {
+      url += `/${idOrTime}`;
     }
 
-    if (eventsToDisplay.length === 0) {
-      list.innerHTML = `<div class="no-events">Nenhum compromisso encontrado para esta seleção.</div>`;
-      return;
-    }
-
-    eventsToDisplay.forEach(ev => {
-      const color = roomColors[ev.location] || '#2563eb';
-      const eventIdentifier = ev._id ? `'${ev._id}'` : (ev.id ? `'${ev.id}'` : `'${ev.time}', '${ev.location}'`);
-
-      list.innerHTML += `
-        <div class="event-card" style="border-left-color: ${color}">
-          <div class="event-header">
-            <div class="event-header-left">
-              <span class="event-time">⏰ ${ev.time}</span>
-              <span class="event-location" style="background-color: ${color}">${ev.location}</span>
-            </div>
-            <button class="btn-delete" title="Cancelar" onclick="cancelAppointment(${eventIdentifier})">🗑️</button>
-          </div>
-          <span class="event-name">Reservado por: ${ev.title}</span>
-        </div>`;
-    });
-  } catch (err) {
-    console.error('Erro ao carregar eventos:', err);
-  }
-}
-
-async function cancelAppointment(id) {
-  if (!id || id === 'undefined') {
-    alert('Erro: ID do agendamento não encontrado.');
-    return;
-  }
-
-  if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
-
-  try {
-    let res = await fetch(`/api/appointments/${id}`, { method: 'DELETE' });
-
-    if (res.status === 404) {
-      res = await fetch(`/api/appointments/id/${id}`, { method: 'DELETE' });
-    }
+    const res = await fetch(url, options);
 
     if (res.ok) {
+      await fetchAllAppointments(); // sei nao 
       await renderEvents();
       updateAvailableTimes();
       loadCalendarDots();
     } else {
-      const errData = await res.json();
-      alert(errData.error || 'Erro ao cancelar.');
+      alert('Erro ao cancelar o agendamento.');
     }
   } catch (err) {
-    console.error('Erro ao cancelar:', err);
+    console.error('Erro ao cancelar agendamento:', err);
     alert('Erro de conexão com o servidor.');
   }
 }
 
 function updateAvailableTimes() {
-  const selectedRoom = document.getElementById('eventLocation')?.value;
+  const roomSelect = document.getElementById('eventLocation');
+  const selectedRoom = roomSelect.value;
   const selectTime = document.getElementById('eventTime');
   
-  if (!selectTime) return;
-
   if (!selectedRoom) {
     selectTime.disabled = true;
     selectTime.innerHTML = '<option value="" disabled selected hidden>Selecione o local primeiro</option>';
@@ -565,9 +492,13 @@ function updateAvailableTimes() {
   selectTime.innerHTML = '<option value="" disabled selected hidden>Selecione o Horário</option>';
 
   let availableHours = [...baseHours];
-  if (selectedRoom === "Informática") availableHours = availableHours.filter(h => h !== "17h00");
+  if (selectedRoom === "Informática") {
+    availableHours = availableHours.filter(h => h !== "17h00");
+  }
 
-  const busyTimes = currentDayEvents.filter(e => e.location === selectedRoom).map(e => e.time);
+  const busyTimes = currentDayEvents
+    .filter(e => e.location === selectedRoom)
+    .map(e => e.time);
 
   availableHours.forEach(h => {
     if (!busyTimes.includes(h)) {
@@ -578,9 +509,9 @@ function updateAvailableTimes() {
 
 async function handleSchedule(e) {
   e.preventDefault();
-  const title = document.getElementById('eventTitle')?.value;
-  const location = document.getElementById('eventLocation')?.value;
-  const time = document.getElementById('eventTime')?.value;
+  const title = document.getElementById('eventTitle').value;
+  const location = document.getElementById('eventLocation').value;
+  const time = document.getElementById('eventTime').value;
 
   if (!location || !time) return;
 
@@ -593,6 +524,7 @@ async function handleSchedule(e) {
 
     if (res.ok) {
       resetForm();
+      await fetchAllAppointments();
       await renderEvents();
       updateAvailableTimes();
       loadCalendarDots();
@@ -604,3 +536,20 @@ async function handleSchedule(e) {
     console.error('Erro ao agendar:', err);
   }
 }
+
+const stack = document.getElementById('weeksStack');
+let isScrolling = false;
+
+stack.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (isScrolling) return;
+
+  isScrolling = true;
+  if (e.deltaY > 0) {
+    setActiveWeek(activeWeekIdx + 1);
+  } else {
+    setActiveWeek(activeWeekIdx - 1);
+  }
+
+  setTimeout(() => { isScrolling = false; }, 250);
+}, { passive: false });
