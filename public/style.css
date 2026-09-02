@@ -6,6 +6,7 @@
   --text: #0f172a;
   --text-muted: #64748b;
   --border: #e2e8f0;
+  --title-shadow: #232324;
   --btn-hover: #4b5057;
   --holiday: #fee2e2;
   --holiday-text: #dc2626;
@@ -58,6 +59,7 @@ body {
   font-weight: 800;
   letter-spacing: 8px;
   color: var(--accent);
+  text-shadow: 3px 3px 3px var(--title-shadow);
 }
 
 .main-page-subtitle {
@@ -67,6 +69,7 @@ body {
   color: var(--text, inherit);
   opacity: 0.9;
   margin-bottom: 1px;
+  text-shadow: 1px 3px 2px var(--btn-hover);
 }
 
 .calendar-container {
@@ -123,7 +126,7 @@ body {
   font-weight: 900; /* Texto mais encorpado */
   letter-spacing: -1px;
   text-transform: uppercase;
-  text-shadow: 0 3px 5px #5b5c5b;
+  text-shadow: 1px 3px 2px var(--btn-hover);
 }
 
 .month-header-large .year-number {
@@ -132,16 +135,16 @@ body {
   font-size: 2rem; /* Aumentado para dar mais destaque */
   font-weight: 900; /* Texto mais encorpado */
   letter-spacing: -1px;
-  text-shadow: 0 3px 5px #1e1f1e;
+  text-shadow: 2px 2px 2px var(--title-shadow);
 }
 
 .nav-arrow {
   background: var(--border);
   color: var(--text);
   border: 1px solid rgba(37, 99, 235, 0.15);
-  width: 32px;
-  height: 32px;
-  border-radius: 7px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -479,6 +482,7 @@ body.dark-mode {
   --accent: #6f9c22;
   --accent-light: #808488;
   --border: #475569;
+  --title-shadow: #b8fa83;
   --input-bg: #334155;
   --btn-bg: #334155;
   --btn-hover: #8f9296;
