@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda Light - Precision Booking</title>
+</head>
+<body>
+
+  <div class="calendar-container">
+    <div class="month-page" id="page">
+      
+      <div class="top-toolbar">
+        <select id="globalRoomFilter" class="room-filter-select" onchange="applyGlobalFilter()">
+          <option value="">🔍 Filtrar Sala (Todas)</option>
+          <option value="Informática">Informática</option>
+          <option value="Auditório">Auditório</option>
+          <option value="Química">Química</option>
+          <option value="Matemática">Matemática</option>
+        </select>
+        <button class="toolbar-btn" id="viewToggleBtn" onclick="toggleFullMonthView()">Visão Mensal</button>
+      </div>
+
+      <div class="month-navigation">
+        <div class="nav-arrow" onclick="changeMonth(-1)">‹</div>
+        <div class="month-header-large">
+          <span class="month-name" id="monthLabel">JANEIRO</span>
+          <span class="year-number" id="yearLabel">2026</span>
+        </div>
+        <div class="nav-arrow" onclick="changeMonth(1)">›</div>
+      </div>
+      
+      <div class="weeks-stack" id="weeksStack"></div>
+      <div class="full-month-grid" id="fullMonthGrid"></div>
+
+      <div class="day-drawer" id="dayDrawer">
+        <div class="drawer-header">
+          <h3 class="drawer-title" id="drawerDate">Dia</h3>
+          <button class="close-btn" onclick="closeDrawer()">✕</button>
+        </div>
+
+        <div class="holiday-notice" id="holidayNotice">
+          <div class="holiday-icon">🎉</div>
+          <h4 class="holiday-title">Feriado</h4>
+          <p class="holiday-name" id="holidayName">Nome do Feriado</p>
+          <span class="holiday-badge">Não é possível fazer agendamentos!</span>
+        </div>
+
+        <div class="events-list" id="eventsList"></div>
+
+        <form class="schedule-form" id="bookingForm" onsubmit="handleSchedule(event)">
+          <input type="text" id="eventTitle" placeholder="Nome / Professor" required>
+          
+          <select id="eventLocation" onchange="updateAvailableTimes()" required>
+            <option value="" disabled selected hidden>Selecione o Local</option>
+            <option value="Informática">Informática</option>
+            <option value="Auditório">Auditório</option>
+            <option value="Química">Química</option>
+            <option value="Matemática">Matemática</option>
+          </select>
+
+          <select id="eventTime" disabled required>
+            <option value="" disabled selected hidden>Selecione o local primeiro</option>
+          </select>
+
+          <button type="submit">Confirmar Agendamento</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Botão Dark Mode Grande e Claramente Posicionado na Base -->
+  <div class="global-footer-bar">
+    <button class="dark-mode-toggle-large" id="darkModeBtn" onclick="toggleDarkMode()">
+      🌙 Alternar para Modo Escuro
+    </button>
+  </div>
+</body>
+</html>
