@@ -11,22 +11,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Modal de Instalação para iPhone (Oculto por padrão) -->
-  <div id="ios-install-modal" class="pwa-modal-overlay" style="display: none;">
-      <div class="pwa-modal-box">
-          <div class="pwa-modal-title">Instale nosso App no iPhone</div>
-          <p class="pwa-modal-text">
-              Para a melhor experiência, adicione este calendário à sua Tela de Início tocando no ícone de compartilhamento <span style="font-size: 1.2rem;">⎋</span> e depois em <b>"Adicionar à Tela de Início"</b>.
-          </p>
-          <button id="ios-got-it-btn" class="pwa-btn-got-it">Entendido</button>
-      </div>
-  </div>
-
-  <!-- Banner de Instalação para Android (Oculto por padrão) -->
+    <!-- Banner de Instalação para Android (Oculto por padrão) -->
   <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
       <div>
           <div class="pwa-banner-title">Instalar Aplicativo</div>
-          <div class="pwa-banner-subtitle">Adicione o agendador à tela inicial para acesso rápido.</div>
+          <div class="pwa-banner-subtitle">Toque para adicionar a agenda à Tela de Início!</div>
       </div>
       <div class="pwa-banner-actions">
           <button id="pwa-install-btn" class="pwa-btn-install">Instalar</button>
@@ -34,13 +23,18 @@
       </div>
   </div>
 
+  <!-- Modal de Instalação para iPhone (Oculto por padrão) -->
+  <div id="ios-install-modal" class="pwa-modal-overlay" style="display: none;">
+      <div class="pwa-modal-box">
+          <div class="pwa-modal-title">Instalar Aplicativo</div>
+          <p class="pwa-modal-text">
+              Toque no ícone de compartilhamento para adicionar a agenda à sua Tela de Início <span style="font-size: 1.2rem;">⎋</span> e depois em <b>"Adicionar à Tela de Início"</b>.
+          </p>
+          <button id="ios-got-it-btn" class="pwa-btn-got-it">Entendido</button>
+      </div>
+  </div>
+
   <div class="calendar-container">
-
-    <div class="header-title-container">
-      <h1 class="main-page-title">COC</h1>
-      <h3 class="main-page-subtitle">LABORATÓRIOS</h3>
-    </div>
-
     <div class="top-controls-bar">
       <!-- Linha de Cima: Botões Lado a Lado -->
       <div class="top-buttons-row">
@@ -115,6 +109,10 @@
         </form>
       </div>
 
+      <div class="header-title-container">
+        <h1 class="main-page-title">COC</h1>
+        <h3 class="main-page-subtitle">LABORATÓRIOS</h3>
+      </div>
     </div>
   </div>
 
