@@ -348,7 +348,12 @@ async function applyRoomFilter() {
   }
 }
 
+let isOpeningDay = false; // Trava global para evitar duplo clique
+
 async function openDay(dateKey, weekDayName, dayNum, holidayName) {
+  if (isOpeningDay) return; // Se já estiver abrindo um dia, ignora novos cliques instantâneos
+  isOpeningDay = true;
+
   selectedDayKey = dateKey;
   
   const formattedDate = formatNiceDate(dateKey);
@@ -358,6 +363,9 @@ async function openDay(dateKey, weekDayName, dayNum, holidayName) {
   const holidayNotice = document.getElementById('holidayNotice');
   const holidayNameEl = document.getElementById('holidayName');
   const eventsList = document.getElementById('eventsList');
+
+  // Limpa preventivamente a lista para evitar duplicação visual
+  eventsList.innerHTML = '';
 
   if (holidayName) {
     form.style.display = 'none';
@@ -370,10 +378,9 @@ async function openDay(dateKey, weekDayName, dayNum, holidayName) {
     form.style.display = 'flex';
     resetForm();
     
-    // Primeiro renderiza os eventos (que já filtram pela sala selecionada, se houver)
+    // Renderiza os eventos sem duplicar
     await renderEvents();
 
-    // Se houver uma sala selecionada no filtro superior, aplica no formulário e atualiza horários
     if (selectedGlobalRoom) {
       const roomSelect = document.getElementById('eventLocation');
       roomSelect.value = selectedGlobalRoom;
@@ -386,6 +393,7 @@ async function openDay(dateKey, weekDayName, dayNum, holidayName) {
   
   setTimeout(() => {
     drawer.classList.add('open');
+    isOpeningDay = false; // Libera a trava após a animação/abertura
   }, 10);
 }
 
