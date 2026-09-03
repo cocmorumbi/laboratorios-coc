@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
+const cron = require('node-cron');
 
 const app = express();
 
@@ -50,7 +51,6 @@ app.post('/api/appointments', async (req, res) => {
   }
 
   try {
-    // Verifica se já existe agendamento no mesmo horário/local/dia
     const checkExisting = await pool.query(
       'SELECT * FROM appointments WHERE "dayKey" = $1 AND location = $2 AND time = $3',
       [dayKey, location, time]
@@ -112,6 +112,19 @@ app.delete('/api/appointments/:dayKey', async (req, res) => {
   } catch (err) {
     console.error('Erro ao deletar agendamento:', err);
     res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+// Tarefa agendada para limpar agendamentos com mais de 1 ano (todo dia 1º à meia-noite)
+cron.schedule('0 0 1 * *', async () => {
+  try {
+    await pool.query(`
+      DELETE FROM appointments 
+      WHERE "dayKey" < TO_CHAR(NOW() - INTERVAL '1 year', 'YYYY-MM-DD');
+    `);
+    console.log('Limpeza automática de agendamentos antigos executada com sucesso.');
+  } catch (error) {
+    console.error('Erro ao executar limpeza automática:', error);
   }
 });
 
