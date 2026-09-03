@@ -119,40 +119,35 @@ body {
   justify-content: space-between;
   width: 100%;
   margin-bottom: 20px;
+  gap: 8px;
 }
 
 .month-header-large {
   display: flex;
-  gap: 10px;
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0; /* Essencial para permitir que o texto encolha */
+  gap: 8px;
+  overflow: hidden;
 }
 
 .month-header-large .month-name {
   color: var(--text);
-  display: flex;
-  flex-grow: 1;
-  gap: 12px;
-  font-size: 1.5rem;
+  font-size: clamp(1rem, 4vw, 1.5rem); /* Diminui automaticamente se faltar espaço */
   font-weight: 900;
   letter-spacing: -1px;
   text-transform: uppercase;
-  align-items: center;
-  justify-content: center;
+  white-space: nowrap;
   text-shadow: 0 3px 2px var(--btn-hover);
 }
 
 .month-header-large .year-number {
   color: var(--accent);
-  display: flex;
-  flex-grow: 1;
-  gap: 12px;
-  font-size: 1.7rem;
+  font-size: clamp(1.1rem, 4.5vw, 1.7rem); /* Diminui automaticamente se faltar espaço */
   font-weight: 900;
   letter-spacing: -1px;
-  align-items: center;
-  justify-content: center;
+  white-space: nowrap;
   text-shadow: 1px 2px 2px var(--title-shadow);
 }
 
