@@ -162,7 +162,7 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin: 20px;
+  margin: 4px;
   font-size: 1.3rem;
   font-weight: bold;
   cursor: pointer;
