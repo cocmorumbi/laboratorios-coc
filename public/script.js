@@ -351,7 +351,7 @@ async function applyRoomFilter() {
 let isOpeningDay = false; // Trava global para evitar duplo clique
 
 async function openDay(dateKey, weekDayName, dayNum, holidayName) {
-  if (isOpeningDay) return; // Se já estiver abrindo um dia, ignora novos cliques instantâneos
+  if (isOpeningDay) return; 
   isOpeningDay = true;
 
   selectedDayKey = dateKey;
@@ -367,11 +367,23 @@ async function openDay(dateKey, weekDayName, dayNum, holidayName) {
   // Limpa preventivamente a lista para evitar duplicação visual
   eventsList.innerHTML = '';
 
+  // Pega a data de hoje no formato YYYY-MM-DD
+  const hoje = new Date().toISOString().split('T')[0];
+  const isPassado = dateKey < hoje;
+
   if (holidayName) {
     form.style.display = 'none';
     eventsList.style.display = 'none';
     holidayNameEl.innerText = holidayName;
     holidayNotice.style.display = 'flex';
+  } else if (isPassado) {
+    // Se o dia for anterior a hoje, esconde o form e mostra apenas o histórico
+    holidayNotice.style.display = 'none';
+    form.style.display = 'none';
+    eventsList.style.display = 'flex';
+    
+    // Renderiza os eventos passados apenas para consulta
+    await renderEvents();
   } else {
     holidayNotice.style.display = 'none';
     eventsList.style.display = 'flex';
@@ -393,7 +405,7 @@ async function openDay(dateKey, weekDayName, dayNum, holidayName) {
   
   setTimeout(() => {
     drawer.classList.add('open');
-    isOpeningDay = false; // Libera a trava após a animação/abertura
+    isOpeningDay = false; 
   }, 10);
 }
 

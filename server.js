@@ -50,6 +50,14 @@ app.post('/api/appointments', async (req, res) => {
     return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
   }
 
+  // Pega a data de hoje no formato YYYY-MM-DD baseada no servidor
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Bloqueia se a data do agendamento for anterior a hoje
+  if (dayKey < hoje) {
+    return res.status(400).json({ error: 'Não é permitido criar agendamentos para dias anteriores.' });
+  }
+
   try {
     const checkExisting = await pool.query(
       'SELECT * FROM appointments WHERE "dayKey" = $1 AND location = $2 AND time = $3',
