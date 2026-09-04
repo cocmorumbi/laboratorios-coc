@@ -287,6 +287,16 @@ async function fetchAllAppointments() {
 }
 
 function handleDayClick(dateKey, weekDayName, dayNum, holidayName, weekIndex) {
+  const stack = document.getElementById('weeksStack');
+  const isMonthly = stack ? stack.classList.contains('monthly-view') : false;
+
+  // Se estiver na visão mensal, abre direto sem precisar selecionar a semana primeiro
+  if (isMonthly) {
+    openDay(dateKey, weekDayName, dayNum, holidayName);
+    return;
+  }
+
+  // Comportamento normal da visão semanal
   if (activeWeekIdx !== weekIndex) {
     setActiveWeek(weekIndex);
     return;
@@ -466,7 +476,7 @@ function closeDrawer() {
   
   setTimeout(() => {
     drawer.style.display = 'none';
-  }, 800);
+  }, 1200);
 }
 
 async function cancelAppointment(idOrTime, location) {
