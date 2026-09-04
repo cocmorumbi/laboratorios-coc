@@ -595,14 +595,6 @@ body.dark-mode {
   transform: translateY(0);
 }
 
-#weeksStack.monthly-view .week-card {
-  filter: none !important;
-  opacity: 1 !important;
-  transform: none !important;
-  pointer-events: auto !important;
-  margin-bottom: 12px;
-}
-
 /* ==========================================================
    AJUSTE DE RESPONSIVIDADE PARA CELULAR (Elimina margens laterais)
    ========================================================== */
