@@ -183,15 +183,6 @@ body {
   padding-right: 4px;
 }
 
-#weeksStack.monthly-view .week-card {
-  opacity: 1 !important;
-  filter: blur(0px) !important;
-  transform: scale(1) !important;
-  cursor: pointer !important;
-  background: var(--card-bg);
-  border-color: var(--border);
-}
-
 .week-card {
   background: var(--bg);
   border-radius: 18px;
@@ -593,6 +584,14 @@ body.dark-mode {
 
 .theme-toggle-btn:active {
   transform: translateY(0);
+}
+
+#weeksStack.monthly-view .week-card {
+  filter: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  margin-bottom: 12px;
 }
 
 /* ==========================================================
